@@ -41,4 +41,4 @@ In my coherent uniform grid test, the performance improve quite a lot. This is b
 Why or why not? Be careful: it is insufficient (and possibly incorrect) to say
 that 27-cell is slower simply because there are more cells to check!
 
-Yes. 
+Yes. Checking 27 neighboring will require more memory and more cach miss will occur.
