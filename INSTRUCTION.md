@@ -1,7 +1,7 @@
 CUDA Introduction - Flocking
 ============================
 
-This is due Sunday, September 10.
+This is due Sunday, September 9.
 
 **Summary:** In this project, you will get some real experience writing simple
 CUDA kernels, using them, and analyzing their performance. You'll implement a
@@ -52,6 +52,8 @@ key-value sorting on the GPU. If everything is working right, you should see
 some output in the console window and a cube of gray particles. The viewer is
 equipped with camera controls: left-click and drag to move the camera view,
 right-click and drag vertically to zoom in and out.
+
+**NOTE: Build the project in `release` mode for performance analysis and capturing.**
 
 On some configurations (commonly on lab machines), the unmodified code built in
 `release` mode crashes mysteriously with an
@@ -269,7 +271,9 @@ metric, but adding your own `cudaTimer`s, etc., will allow you to do more
 fine-grained benchmarking of various parts of your code.
 
 REMEMBER:
-* Do your performance testing in Release mode!
+* Do your performance testing in `Release` mode!
+* Turn off Vertical Sync in Nvidia Control Panel:
+![Unlock FPS](images/UnlockFPS.png)
 * Performance should always be measured relative to some baseline when
   possible. A GPU can make your program faster - but by how much?
 * If a change impacts performance, show a comparison. Describe your changes.
