@@ -17,6 +17,8 @@
 
 #define checkCUDAErrorWithLine(msg) checkCUDAError(msg, __LINE__)
 
+#define neighbors8 1
+
 /**
 * Check for CUDA errors; print and exit if there was a problem.
 */
@@ -311,7 +313,7 @@ __global__ void kernUpdateVelocityBruteForce(int N, glm::vec3 *pos,
 	glm::vec3 velocityChange = computeVelocityChange(N, index, pos, vel1);
 	glm::vec3 vel2New = vel1[index] + velocityChange;
   // Clamp the speed
-	vel2New = glm::length(vel2New) > maxSpeed ? glm::normalize(vel2New)*maxSpeed : vel2New;
+	vel2New = glm::length(vel2New) > maxSpeed ? maxSpeed * glm::normalize(vel2New) : vel2New;
 	//vel2New = glm::vec3(glm::clamp(vel2New.x, -maxSpeed, maxSpeed), 
 	//	glm::clamp(vel2New.y, -maxSpeed, maxSpeed), 
 	//	glm::clamp(vel2New.z, -maxSpeed, maxSpeed));
@@ -436,44 +438,70 @@ __global__ void kernUpdateVelNeighborSearchScattered(
 	glm::vec3 cohesion = glm::vec3(0.0f);
 	int neighborCountRule1 = 0;
 	int neighborCountRule3 = 0;
-	for (int gridz = cellPos.z - 1; gridz <= cellPos.z + 1; gridz++) {
-		for (int gridy = cellPos.y - 1; gridy <= cellPos.y + 1; gridy++) {
-			for (int gridx = cellPos.x - 1; gridx <= cellPos.x + 1; gridx++) {
-				int x = imax(gridx, 0);
-				int y = imax(gridy, 0);
-				int z = imax(gridx, 0);
-				x = imin(gridx, gridResolution - 1);
-				y = imin(gridy, gridResolution - 1);
-				z = imin(gridz, gridResolution - 1);
-	//for (int z = neighborcellstart.z; z <= neighborcellend.z; z++) {
-	//	for (int y = neighborcellstart.y; y <= neighborcellend.y; y++) {
-	//		for (int x = neighborcellstart.x; x <= neighborcellend.x; x++) {
-				int neighborGridInd = gridIndex3Dto1D(x, y, z, gridResolution);
-				int startInd = gridCellStartIndices[neighborGridInd];
-				int endInd = gridCellEndIndices[neighborGridInd];
-				for (int j = startInd; j < endInd; j++) {
-					int i = particleArrayIndices[j];
-					if (i == index) {
-						continue;
-					}
-					glm::vec3 thatBoidPos = pos[i];
-					glm::vec3 thatBoidVel = vel1[i];
-					float dist = glm::distance(thisBoidPos, thatBoidPos);
-					if (dist < rule1Distance) {
-						center += thatBoidPos;
-						neighborCountRule1++;
-					}
-					if (dist < rule2Distance) {
-						seperate -= thatBoidPos - thisBoidPos;
-					}
-					if (dist < rule3Distance) {
-						cohesion += thatBoidVel;
-						neighborCountRule3++;
+	int xStart = -1, xEnd = 1;
+	int yStart = -1, yEnd = 1;
+	int zStart = -1, zEnd = 1;
+
+	#if neighbors8
+		glm::vec3 cellPosFloor = cellPos - glm::floor(cellPos);
+		if (cellPosFloor.x < 0.5f) {
+			xEnd = 0;
+		}
+		else {
+			xStart = 0;
+		}
+		if (cellPosFloor.y < 0.5f) {
+			yEnd = 0;
+		}
+		else {
+			yStart = 0;
+		}
+		if (cellPosFloor.z < 0.5f) {
+			zEnd = 0;
+		}
+		else {
+			zStart = 0;
+		}
+	#endif
+		for (int gridz = cellPos.z + zStart; gridz <= cellPos.z + zEnd; gridz++) {
+			for (int gridy = cellPos.y + yStart; gridy <= cellPos.y + yEnd; gridy++) {
+				for (int gridx = cellPos.x + xStart; gridx <= cellPos.x + xEnd; gridx++) {
+					int x = imax(gridx, 0);
+					int y = imax(gridy, 0);
+					int z = imax(gridx, 0);
+					x = imin(gridx, gridResolution - 1);
+					y = imin(gridy, gridResolution - 1);
+					z = imin(gridz, gridResolution - 1);
+		//for (int z = neighborcellstart.z; z <= neighborcellend.z; z++) {
+		//	for (int y = neighborcellstart.y; y <= neighborcellend.y; y++) {
+		//		for (int x = neighborcellstart.x; x <= neighborcellend.x; x++) {
+					int neighborGridInd = gridIndex3Dto1D(x, y, z, gridResolution);
+					int startInd = gridCellStartIndices[neighborGridInd];
+					int endInd = gridCellEndIndices[neighborGridInd];
+					for (int j = startInd; j < endInd; j++) {
+						int i = particleArrayIndices[j];
+						if (i == index) {
+							continue;
+						}
+						glm::vec3 thatBoidPos = pos[i];
+						glm::vec3 thatBoidVel = vel1[i];
+						float dist = glm::distance(thisBoidPos, thatBoidPos);
+						if (dist < rule1Distance) {
+							center += thatBoidPos;
+							neighborCountRule1++;
+						}
+						if (dist < rule2Distance) {
+							seperate -= thatBoidPos - thisBoidPos;
+						}
+						if (dist < rule3Distance) {
+							cohesion += thatBoidVel;
+							neighborCountRule3++;
+						}
 					}
 				}
 			}
 		}
-	}
+
 	if (neighborCountRule1 > 0) {
 		center /= neighborCountRule1;
 		thisBoidVel += (center - thisBoidPos) * rule1Scale;
@@ -485,7 +513,7 @@ __global__ void kernUpdateVelNeighborSearchScattered(
 	thisBoidVel += seperate * rule2Scale;
     // - Clamp the speed change before putting the new speed in vel2
 	glm::vec3 vel2New = vel1[index] + thisBoidVel;
-	vel2New = glm::length(vel2New) > maxSpeed ? glm::normalize(vel2New)*maxSpeed : vel2New;
+	vel2New = glm::length(vel2New) > maxSpeed ? maxSpeed * glm::normalize(vel2New) : vel2New;
 	vel2[index] = vel2New;
 }
 
@@ -535,9 +563,35 @@ __global__ void kernUpdateVelNeighborSearchCoherent(
 	glm::vec3 cohesion = glm::vec3(0.0f);
 	int neighborCountRule1 = 0;
 	int neighborCountRule3 = 0;
-	for (int gridz = cellPos.z - 1; gridz <= cellPos.z + 1; gridz++) {
-		for (int gridy = cellPos.y - 1; gridy <= cellPos.y + 1; gridy++) {
-			for (int gridx = cellPos.x - 1; gridx <= cellPos.x + 1; gridx++) {
+
+	int xStart = -1, xEnd = 1;
+	int yStart = -1, yEnd = 1;
+	int zStart = -1, zEnd = 1;
+
+	#if neighbors8
+		glm::vec3 cellPosFloor = cellPos - glm::floor(cellPos);
+		if (cellPosFloor.x < 0.5f) {
+			xEnd = 0;
+		}
+		else {
+			xStart = 0;
+		}
+		if (cellPosFloor.y < 0.5f) {
+			yEnd = 0;
+		}
+		else {
+			yStart = 0;
+		}
+		if (cellPosFloor.z < 0.5f) {
+			zEnd = 0;
+		}
+		else {
+			zStart = 0;
+		}
+	#endif
+	for (int gridz = cellPos.z + zStart; gridz <= cellPos.z + zEnd; gridz++) {
+		for (int gridy = cellPos.y + yStart; gridy <= cellPos.y + yEnd; gridy++) {
+			for (int gridx = cellPos.x + xStart; gridx <= cellPos.x + xEnd; gridx++) {
 				int x = imax(gridx, 0);
 				int y = imax(gridy, 0);
 				int z = imax(gridx, 0);
@@ -581,7 +635,7 @@ __global__ void kernUpdateVelNeighborSearchCoherent(
 	thisBoidVel += seperate * rule2Scale;
 	// - Clamp the speed change before putting the new speed in vel2
 	glm::vec3 vel2New = vel1[index] + thisBoidVel;
-	vel2New = glm::length(vel2New) > maxSpeed ? glm::normalize(vel2New)*maxSpeed : vel2New;
+	vel2New = glm::length(vel2New) > maxSpeed ? maxSpeed * glm::normalize(vel2New) : vel2New;
 	vel2[index] = vel2New;
 }
 
