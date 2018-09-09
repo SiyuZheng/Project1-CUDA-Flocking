@@ -8,9 +8,9 @@ Project 1 - Flocking**
 
 ## Result
 
-![](images/coh15000b.gif)
+![](images/coh20000b.gif)
 
-Simulation using coherent grids when boids number is 15000 and block size is 128.
+Simulation using coherent grids when boids number is 20000 and block size is 128.
 
 ## Performance Analysis
 
