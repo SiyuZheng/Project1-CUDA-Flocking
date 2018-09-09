@@ -43,3 +43,16 @@ Why or why not? Be careful: it is insufficient (and possibly incorrect) to say
 that 27-cell is slower simply because there are more cells to check!
 
 Yes. Checking 27 neighboring will require more memory and more cach miss will occur.
+
+| 10000 boids        | 8 neighbors          | 27 neighbors  |
+| ------------- |:-------------:| -----:|
+| scattered      | 1346.6 | 1229.9 |
+| coherent      | 1838.9      |   1534.2 |
+
+
+| 20000 boids        | 8 neighbors          | 27 neighbors  |
+| ------------- |:-------------:| -----:|
+| scattered      | 783.8 | 1534.2 |
+| coherent      | 1486.5      |   1156.6 |
+
+For my own experiment, the implementation of 8 neighbors has better performance thant 27 neighbors.
