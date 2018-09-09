@@ -2,7 +2,8 @@
 Project 1 - Flocking**
 
 * Siyu Zheng
-* Tested on: Tested on: Windows 10, i7-8750 @ 2.20GHz 16GB, GTX 1060 6GB (Personal Laptop)
+  * [LinkedIn](https://www.linkedin.com/in/siyu-zheng-b3b38aa8/)
+* Tested on: Tested on: Tested on: Windows 10, i7-8750 @ 2.20GHz 16GB, GTX 1060 6GB (Personal Laptop)
 
 
 ## Result
