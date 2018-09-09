@@ -17,7 +17,7 @@
 
 #define checkCUDAErrorWithLine(msg) checkCUDAError(msg, __LINE__)
 
-#define neighbors8 0
+#define neighbors8 1
 
 /**
 * Check for CUDA errors; print and exit if there was a problem.
